@@ -114,6 +114,11 @@ def main():
     submit_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
     submit_parser.add_argument("--git-url", type=str, required=True, help="Git repository URL")
 
+    # Raw code submission sub-command (single file)
+    submit_file_parser = subparsers.add_parser("submit_file", help="Submit single code file content")
+    submit_file_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
+    submit_file_parser.add_argument("--file", type=str, required=True, help="Path to code file (e.g., src.hpp)")
+
     # Sub-command for checking submission status
     status_parser = subparsers.add_parser("status", help="Check submission status")
     status_parser.add_argument("--submission-id", type=int, required=True, help="Submission ID")
@@ -132,6 +137,17 @@ def main():
 
     if args.command == "submit":
         result = client.submit_git(args.problem_id, args.git_url)
+    elif args.command == "submit_file":
+        try:
+            with open(args.file, 'r', encoding='utf-8') as f:
+                code_text = f.read()
+        except Exception as e:
+            print(f"Failed to read file {args.file}: {e}")
+            return
+        data = {"language": "cpp", "code": code_text}
+        result = client._make_request("POST", f"/problem/{args.problem_id}/submit", data=data)
+        if result and 'id' in result:
+            client._save_submission_id(result['id'])
     elif args.command == "status":
         result = client.get_submission_detail(args.submission_id)
     elif args.command == "abort":
