@@ -1,0 +1,5 @@
+# Ignore local builds
+/test_local
+*.o
+*.out
+*.exe
